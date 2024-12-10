@@ -94,7 +94,7 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 var star = task.star ? "*" : "";
                 var passed = task.passed ? 1 : 0;
-                var weighting = (int)task.mult == 1 ? "" : "({task.mult}x Gewichtung)";
+                var weighting = (int)task.mult == 1 ? "" : $"({task.mult}x Gewichtung)";
                 var taskLine = $"{task.task}) {passed}{star}/1 {weighting}";
                 pointCounter += passed * task.mult;
                 starPointCounter += task.star ? passed * task.mult : 0;

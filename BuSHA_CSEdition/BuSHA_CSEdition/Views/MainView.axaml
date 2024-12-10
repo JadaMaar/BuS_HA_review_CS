@@ -30,9 +30,9 @@
         <Border Background="#2b2b2b" HorizontalAlignment="Stretch" BorderBrush="#737373" BorderThickness="0, 3">
             <Border.Height>
                 <MultiBinding Converter="{StaticResource HeightSubtractConverter}">
-                    <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="Height" />
-                    <Binding ElementName="FirsSection" Path="Bounds.Height"></Binding>
-                    <Binding ElementName="LastSection" Path="Bounds.Height"></Binding>
+                    <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="Height" FallbackValue="0" />
+                    <Binding ElementName="FirsSection" Path="Bounds.Height" FallbackValue="0"></Binding>
+                    <Binding ElementName="LastSection" Path="Bounds.Height" FallbackValue="0"></Binding>
                 </MultiBinding>
             </Border.Height>
             <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
