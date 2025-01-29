@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using BuSHA_CSEdition.Models;
@@ -25,6 +26,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             _fileName = value;
             IsSaved = false;
+            OnPropertyChanged();
+        }
+    }
+
+    private String _savePath = "/reports/";
+
+    public string SavePath
+    {
+        get => _savePath;
+        set
+        {
+            _savePath = value;
             OnPropertyChanged();
         }
     }
@@ -163,7 +176,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (ValidateInputs())
         {
             Directory.CreateDirectory("reports");
-            using (StreamWriter outputFile = new StreamWriter($"reports/{FileName}.txt"))
+            using (StreamWriter outputFile = new StreamWriter($"{SavePath}{FileName}.txt"))
             {
                 float maxPoints = 0f;
                 float pointCounter = 0f;
@@ -215,5 +228,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         return true;
+    }
+
+    public void Export(string path)
+    {
+        using (StreamWriter outputFile = new StreamWriter(path))
+        {
+            foreach (var task in Tasks)
+            {
+                outputFile.WriteLine($"{task.TaskName}|{task.Mult}");
+            }
+        }
+    }
+
+    public void Import(string path)
+    {
+        Tasks.Clear();
+        const Int32 BufferSize = 128;
+        using (var fileStream = File.OpenRead(path))
+        using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+            String line;
+            while ((line = streamReader.ReadLine()) != null)
+            {
+                // Process line
+                Console.WriteLine(line);
+                var values = line.Split('|');
+                Task task = new Task();
+                task.TaskName = values[0];
+                task.Mult = float.Parse(values[1]);
+                Tasks.Add(task);
+            }
+        }
     }
 }
