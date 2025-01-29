@@ -97,7 +97,8 @@ public partial class MainView : UserControl
             Title = "Open File",
             AllowMultiple = false
         });
-        if (files != null)
+        Console.WriteLine(files);
+        if (files is { Count: > 0 })
         {
             var vm = (MainViewModel)DataContext!;
             vm.Import(files[0].Path.LocalPath);
@@ -115,9 +116,11 @@ public partial class MainView : UserControl
             Title = "Pick Folder",
             AllowMultiple = false
         });
-
-        var vm = (MainViewModel)DataContext!;
-        vm.SavePath = folder[0].Path.LocalPath;
+        if (folder is { Count: > 0 })
+        {
+            var vm = (MainViewModel)DataContext!;
+            vm.SavePath = folder[0].Path.LocalPath;
+        }
     }
 
     private void OpenSettings(object? sender, RoutedEventArgs e)
