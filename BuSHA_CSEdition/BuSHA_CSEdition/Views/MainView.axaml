@@ -15,19 +15,21 @@
 
     <UserControl.Resources>
         <converters:HeightSubtractConverter x:Key="HeightSubtractConverter" />
+        <converters:ImageConverter x:Key="ImageConverter"></converters:ImageConverter>
+        <converters:FloatToStringConverter x:Key="FloatToStringConverter"></converters:FloatToStringConverter>
     </UserControl.Resources>
     <StackPanel Background="#292929">
         <StackPanel Name="FirsSection" HorizontalAlignment="Center" Spacing="10">
-            <!--<TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center" />-->
-            <TextBox Watermark="Teamname" MinWidth="300" x:Name="NameBox" TextChanged="NameBox_OnTextChanged"></TextBox>
+            <TextBox Watermark="Teamname" MinWidth="300" x:Name="NameBox" TextChanged="NameBox_OnTextChanged" Text="{Binding FileName}"></TextBox>
+            <!-- Task control buttons -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                 <Button Click="Clear" HorizontalAlignment="Left">Clear</Button>
-                <Button Click="Button_OnClick" HorizontalAlignment="Center">Add Task</Button>
+                <Button Click="AddTask" HorizontalAlignment="Center">Add Task</Button>
                 <Button Click="RemoveTask" HorizontalAlignment="Center">Remove Task</Button>
             </StackPanel>
-            <!--<Button Click="Button_OnClick1">Print</Button>-->
         </StackPanel>
         <Border Background="#2b2b2b" HorizontalAlignment="Stretch" BorderBrush="#737373" BorderThickness="0, 3">
+            <!-- Scale with window size -->
             <Border.Height>
                 <MultiBinding Converter="{StaticResource HeightSubtractConverter}">
                     <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="Height" FallbackValue="0" />
@@ -39,6 +41,7 @@
                 <StackPanel Spacing="50" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <ItemsControl ItemsSource="{Binding Tasks}" x:Name="Control">
 
+                        <!-- Task template -->
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
 
@@ -46,23 +49,24 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top"
                                             HorizontalAlignment="Center" Margin="10" MinWidth="700">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Spacing="5">
-                                        <TextBox Height="30" Text="{Binding task}" Watermark="Task"></TextBox>
-                                        <TextBox Height="30" Text="{Binding mult}"
-                                                 TextChanging="TextBox_OnTextChanging">
+                                        <TextBox Height="30" Text="{Binding TaskName}" Watermark="Task"></TextBox>
+                                        <TextBox Height="30" Text="{Binding Mult, Converter={StaticResource FloatToStringConverter}}">
                                         </TextBox>
-                                        <CheckBox IsChecked="{Binding star}" >🌟</CheckBox>
-                                        <CheckBox IsChecked="{Binding passed, Mode=TwoWay}" IsEnabled="{Binding !star}">✅</CheckBox>
+                                        <CheckBox IsChecked="{Binding Star}" >🌟</CheckBox>
+                                        <CheckBox IsChecked="{Binding Passed, Mode=TwoWay}" IsEnabled="{Binding !Star}">✅</CheckBox>
                                     </StackPanel>
 
+                                    <!-- Comments -->
                                     <StackPanel>
                                         <Button Click="AddComment" Padding="5" Margin="40, 0, 0, 10">Add Comment</Button>
-                                        <ItemsControl ItemsSource="{Binding comments}">
+                                        <!-- Comment template -->
+                                        <ItemsControl ItemsSource="{Binding Comments}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
 
                                                     <StackPanel Orientation="Horizontal" Margin="10, 0, 0, 0">
-                                                        <TextBox Text="{Binding text}" MinWidth="400"
-                                                                 AcceptsReturn="True">
+                                                        <TextBox Text="{Binding Text}" MinWidth="400" MaxWidth="400"
+                                                                 AcceptsReturn="True" TextWrapping="Wrap">
                                                         </TextBox>
                                                         <Button Click="RemoveComment">-</Button>
                                                     </StackPanel>
@@ -71,6 +75,7 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </StackPanel>
+                                    
                                 </StackPanel>
 
 
@@ -81,8 +86,9 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
-        <StackPanel Name="LastSection" HorizontalAlignment="Center">
+        <StackPanel Name="LastSection" HorizontalAlignment="Center" Orientation="Horizontal">
             <Button Padding="5" Margin="5" FontSize="22" Click="Generate" IsEnabled="False" x:Name="GenerateBtn">Generate</Button>
+            <Image Source="{Binding IsSaved, Converter={StaticResource ImageConverter}}" Width="40" Height="40"></Image>
         </StackPanel>
     </StackPanel>
 </UserControl>

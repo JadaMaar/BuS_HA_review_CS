@@ -8,24 +8,37 @@ namespace BuSHA_CSEdition.Models;
 
 public class Task : INotifyPropertyChanged
 {
-    public string task { get; set; } = "";
-    public float mult { get; set; } = 1f;
+    public string TaskName { get; set; } = "";
+    private float _mult = 1.0f;
+
+    public float Mult
+    {
+        get => _mult;
+        set
+        {
+            _mult = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool _passed;
-    public bool passed {
+
+    public bool Passed
+    {
         get => _passed;
         set
         {
             if (value != _passed)
             {
                 _passed = value;
-                OnPropertyChanged(nameof(passed));
+                OnPropertyChanged();
             }
         }
     }
 
     private bool _star;
 
-    public bool star
+    public bool Star
     {
         get => _star;
         set
@@ -35,15 +48,15 @@ public class Task : INotifyPropertyChanged
                 _star = value;
                 OnPropertyChanged();
                 if (_star)
-                    passed = true;
-                Console.WriteLine(passed);
+                    Passed = true;
+                Console.WriteLine(Passed);
             }
         }
     }
 
     private ObservableCollection<Comment> _comments = new();
 
-    public ObservableCollection<Comment> comments
+    public ObservableCollection<Comment> Comments
     {
         get => _comments;
         set
@@ -56,24 +69,26 @@ public class Task : INotifyPropertyChanged
         }
     }
 
-    public void SetTask(string task)
+    public Task()
     {
-        this.task = task;
-    }
-
-    public void SetMult(float mult)
-    {
-        this.mult = mult;
+        Comments.CollectionChanged += (sender, args) =>
+        {
+            OnPropertyChanged();
+            foreach (var comment in Comments)
+            {
+                comment.PropertyChanged += (sender, args) => { OnPropertyChanged(); };
+            }
+        };
     }
 
     public void AddComment(Comment comment)
     {
-        comments.Add(comment);
+        Comments.Add(comment);
     }
-    
+
     public void RemoveComment(Comment comment)
     {
-        comments.Remove(comment);
+        Comments.Remove(comment);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

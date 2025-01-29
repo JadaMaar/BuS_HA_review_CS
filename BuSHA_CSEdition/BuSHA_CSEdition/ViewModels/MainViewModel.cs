@@ -3,29 +3,70 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using BuSHA_CSEdition.Models;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using Task = BuSHA_CSEdition.Models.Task;
 
 namespace BuSHA_CSEdition.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged
+public sealed class MainViewModel : INotifyPropertyChanged
 {
     public ObservableCollection<Task> Tasks { get; set; } = new();
-    public string Greeting => "Welcome to Avalonia!";
+    private String _fileName = "";
+
+    public String FileName
+    {
+        get => _fileName;
+        set
+        {
+            _fileName = value;
+            IsSaved = false;
+            OnPropertyChanged();
+        }
+    }
+
+    private Boolean _isSaved;
+
+    public Boolean IsSaved
+    {
+        get => _isSaved;
+        set
+        {
+            _isSaved = value;
+            OnPropertyChanged();
+        }
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    public MainViewModel()
+    {
+        Tasks.CollectionChanged += (sender, args) =>
+        {
+            IsSaved = false;
+            if (args.NewItems != null)
+                foreach (Task task in args.NewItems)
+                {
+                    task.PropertyChanged += (o, eventArgs) => { IsSaved = false; };
+                }
+        };
     }
 
     public void AddTask()
@@ -40,13 +81,48 @@ public class MainViewModel : INotifyPropertyChanged
             Tasks.RemoveAt(Tasks.Count - 1);
     }
 
-    public void ClearComments()
+    public async void ClearComments()
     {
+        try
+        {
+            if (IsSaved)
+            {
+                _ClearComments();
+            }
+            else
+            {
+                var box = MessageBoxManager
+                    .GetMessageBoxStandard("Warning", "Are you sure you would like to clear without saving?",
+                        ButtonEnum.YesNo, Icon.Warning, WindowStartupLocation.CenterOwner);
+                if (Avalonia.Application.Current
+                        ?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    if (desktop.MainWindow != null)
+                    {
+                        var result = await box.ShowWindowDialogAsync(desktop.MainWindow);
+                        if (result.ToString() == "Yes")
+                        {
+                            _ClearComments();
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // TODO handle exception
+            Console.WriteLine("Exception caught in ClearComments");
+        }
+    }
+
+    private void _ClearComments()
+    {
+        FileName = "";
         foreach (var task in Tasks)
         {
-            task.comments.Clear();
-            task.star = false;
-            task.passed = false;
+            task.Comments.Clear();
+            task.Star = false;
+            task.Passed = false;
         }
     }
 
@@ -54,7 +130,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         foreach (var task in Tasks)
         {
-            if (task.comments.Contains(comment))
+            if (task.Comments.Contains(comment))
             {
                 task.RemoveComment(comment);
                 break;
@@ -71,42 +147,73 @@ public class MainViewModel : INotifyPropertyChanged
     {
         foreach (var task in Tasks)
         {
-            Console.WriteLine(task.task);
-            Console.WriteLine(task.mult);
-            foreach (var comment in task.comments)
+            Console.WriteLine(task.TaskName);
+            Console.WriteLine(task.Mult);
+            foreach (var comment in task.Comments)
             {
-                Console.WriteLine(comment.text);
+                Console.WriteLine(comment.Text);
             }
 
             Console.WriteLine("-------------------------------------");
         }
     }
 
-    public void Generate(string? name)
+    public async void Generate()
     {
-        Directory.CreateDirectory("reports");
-        using (StreamWriter outputFile = new StreamWriter($"reports/{name}.txt"))
+        if (ValidateInputs())
         {
-            float maxPoints = 0f;
-            float pointCounter = 0f;
-            float starPointCounter = 0f;
-            foreach (var task in Tasks)
+            Directory.CreateDirectory("reports");
+            using (StreamWriter outputFile = new StreamWriter($"reports/{FileName}.txt"))
             {
-                var star = task.star ? "*" : "";
-                var passed = task.passed ? 1 : 0;
-                var weighting = (int)task.mult == 1 ? "" : $"({task.mult}x Gewichtung)";
-                var taskLine = $"{task.task}) {passed}{star}/1 {weighting}";
-                pointCounter += passed * task.mult;
-                starPointCounter += task.star ? passed * task.mult : 0;
-                maxPoints += task.mult;
-                outputFile.WriteLine(taskLine);
-                foreach (var comment in task.comments)
+                float maxPoints = 0f;
+                float pointCounter = 0f;
+                float starPointCounter = 0f;
+                foreach (var task in Tasks)
                 {
-                    outputFile.WriteLine($"- {comment.text}");
+                    var star = task.Star ? "*" : "";
+                    var passed = task.Passed ? 1 : 0;
+                    var weighting = task.Mult == 1f ? "" : $"({task.Mult}x Gewichtung)";
+                    var taskLine = $"{task.TaskName}) {passed}{star}/1 {weighting}";
+                    pointCounter += passed * task.Mult;
+                    starPointCounter += task.Star ? passed * task.Mult : 0;
+                    maxPoints += task.Mult;
+                    outputFile.WriteLine(taskLine);
+                    foreach (var comment in task.Comments)
+                    {
+                        outputFile.WriteLine($"- {comment.Text}");
+                    }
+                }
+
+                outputFile.WriteLine($"Total: {pointCounter}/{maxPoints}");
+                outputFile.WriteLine($"Total *: {starPointCounter}*/{maxPoints}*");
+            }
+
+            IsSaved = true;
+        }
+        else
+        {
+            var box = MessageBoxManager
+                .GetMessageBoxStandard("Error", "Invalid multiplier are being used.\n Use . for decimals",
+                    ButtonEnum.Ok, Icon.Error, WindowStartupLocation.CenterOwner);
+            if (Avalonia.Application.Current
+                    ?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                if (desktop.MainWindow != null)
+                {
+                    var result = await box.ShowWindowDialogAsync(desktop.MainWindow);
                 }
             }
-            outputFile.WriteLine($"Total: {pointCounter}/{maxPoints}");
-            outputFile.WriteLine($"Total *: {starPointCounter}*/{maxPoints}*");
         }
+    }
+
+    private bool ValidateInputs()
+    {
+        foreach (var task in Tasks)
+        {
+            if (task.Mult is float.NaN)
+                return false;
+        }
+
+        return true;
     }
 }
