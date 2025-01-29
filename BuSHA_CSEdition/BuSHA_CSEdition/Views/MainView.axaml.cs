@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -82,7 +83,7 @@ public partial class MainView : UserControl
         if (file != null)
         {
             var vm = (MainViewModel)DataContext!;
-            vm.Export(file.Path.LocalPath);
+            vm.Export(new Uri(file.Path.LocalPath).LocalPath);
         }
     }
 
@@ -101,7 +102,7 @@ public partial class MainView : UserControl
         if (files is { Count: > 0 })
         {
             var vm = (MainViewModel)DataContext!;
-            vm.Import(files[0].Path.LocalPath);
+            vm.Import(new Uri(files[0].Path.LocalPath).LocalPath);
         }
     }
 
@@ -119,7 +120,7 @@ public partial class MainView : UserControl
         if (folder is { Count: > 0 })
         {
             var vm = (MainViewModel)DataContext!;
-            vm.SavePath = folder[0].Path.LocalPath;
+            vm.SavePath = new Uri(folder[0].Path.LocalPath).LocalPath;
         }
     }
 
