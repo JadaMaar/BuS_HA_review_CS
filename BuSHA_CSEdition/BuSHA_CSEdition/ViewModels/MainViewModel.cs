@@ -30,7 +30,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private String _savePath = "/reports/";
+    private String _savePath = Directory.GetCurrentDirectory() + "\\reports\\";
 
     public string SavePath
     {
