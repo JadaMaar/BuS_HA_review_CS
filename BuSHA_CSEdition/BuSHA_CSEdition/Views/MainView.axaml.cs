@@ -128,4 +128,25 @@ public partial class MainView : UserControl
     {
         DialogHost.IsOpen = true;
     }
+
+    private async void CopyOutput(object? sender, RoutedEventArgs e)
+    {
+        var vm = (MainViewModel)DataContext!;
+        try
+        {
+            var output = vm.CopyOutput();  
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            await clipboard.SetTextAsync(output);
+            CopyFlyoutText.Text = "Copied!";
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            CopyFlyoutText.Text = exception.Message;
+        }
+        
+        CopyButton.Flyout.ShowAt(CopyButton);
+        await System.Threading.Tasks.Task.Delay(1000);
+        CopyButton.Flyout.Hide();
+    }
 }

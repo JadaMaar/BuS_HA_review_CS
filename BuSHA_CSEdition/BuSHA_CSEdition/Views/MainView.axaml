@@ -111,6 +111,15 @@
                 </ScrollViewer>
             </Border>
             <StackPanel Name="LastSection" HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Padding="5" Margin="5" FontSize="16" Click="CopyOutput" x:Name="CopyButton" >
+                    <Button.Flyout>
+                        <Flyout Placement="Top">
+                            <TextBlock x:Name="CopyFlyoutText" Text="Copied!" Margin="8" />
+                        </Flyout>
+                    </Button.Flyout>
+                    Copy Output
+                </Button>
+                
                 <Button Padding="5" Margin="5" FontSize="22" Click="Generate" IsEnabled="False" x:Name="GenerateBtn">Generate</Button>
                 <Image Source="{Binding IsSaved, Converter={StaticResource ImageConverter}}" Width="40" Height="40"></Image>
             </StackPanel>

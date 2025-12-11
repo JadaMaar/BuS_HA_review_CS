@@ -71,13 +71,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel()
     {
-        Tasks.CollectionChanged += (sender, args) =>
+        Tasks.CollectionChanged += (_, args) =>
         {
             IsSaved = false;
             if (args.NewItems != null)
                 foreach (Task task in args.NewItems)
                 {
-                    task.PropertyChanged += (o, eventArgs) => { IsSaved = false; };
+                    task.PropertyChanged += (_, _) => { IsSaved = false; };
                 }
         };
     }
@@ -121,7 +121,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 }
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // TODO handle exception
             Console.WriteLine("Exception caught in ClearComments");
@@ -232,32 +232,59 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public void Export(string path)
     {
-        using (StreamWriter outputFile = new StreamWriter(path))
+        using StreamWriter outputFile = new StreamWriter(path);
+        foreach (var task in Tasks)
         {
-            foreach (var task in Tasks)
-            {
-                outputFile.WriteLine($"{task.TaskName}|{task.Mult}");
-            }
+            outputFile.WriteLine($"{task.TaskName}|{task.Mult}");
         }
     }
 
     public void Import(string path)
     {
         Tasks.Clear();
-        const Int32 BufferSize = 128;
+        const Int32 bufferSize = 128;
         using (var fileStream = File.OpenRead(path))
-        using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
-            String line;
-            while ((line = streamReader.ReadLine()) != null)
+        using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, bufferSize)) {
+            while (streamReader.ReadLine() is { } line)
             {
                 // Process line
                 Console.WriteLine(line);
                 var values = line.Split('|');
-                Task task = new Task();
-                task.TaskName = values[0];
-                task.Mult = float.Parse(values[1]);
+                Task task = new Task
+                {
+                    TaskName = values[0],
+                    Mult = float.Parse(values[1])
+                };
                 Tasks.Add(task);
             }
         }
+    }
+
+    public string CopyOutput()
+    {
+        var output = "";
+        float maxPoints = 0f;
+        float pointCounter = 0f;
+        float starPointCounter = 0f;
+        foreach (var task in Tasks)
+        {
+            var star = task.Star ? "*" : "";
+            var passed = task.Passed ? 1 : 0;
+            var weighting = task.Mult == 1f ? "" : $"({task.Mult}x Gewichtung)";
+            var taskLine = $"{task.TaskName}) {passed}{star}/1 {weighting}";
+            pointCounter += passed * task.Mult;
+            starPointCounter += task.Star ? passed * task.Mult : 0;
+            maxPoints += task.Mult;
+            output += $"{taskLine}\n";
+            foreach (var comment in task.Comments)
+            {
+                output += $"- {comment.Text}\n";
+            }
+        }
+
+        output += $"Total: {pointCounter}/{maxPoints}\n";
+        output += $"Total *: {starPointCounter}*/{maxPoints}*";
+        
+        return output;
     }
 }
