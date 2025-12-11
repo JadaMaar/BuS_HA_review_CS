@@ -15,6 +15,6 @@ public class HeightSubtractConverter : IMultiValueConverter
             return windowHeight - stackPanelHeight - stackPanelHeight1;
         }
 
-        return 0;
+        return 0d;
     }
 }
